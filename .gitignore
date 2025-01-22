@@ -1,0 +1,7 @@
+*.swp
+.idea
+.vscode
+slog/*.log
+bin/debug_stop.sh
+bin/debug_start.sh
+logs/*.log
