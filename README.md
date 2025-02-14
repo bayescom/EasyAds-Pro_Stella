@@ -1,6 +1,7 @@
 # 运行环境
 ## 环境说明
 本wiki只针对ubuntu(24.04 LTS)进行验证，其他系统请自行测试。
+简单测试可以使用Docker进行镜像构建。
 ## openresty
 - openresty: latest(current is 1.27.1.1)
 参考[官方文档](https://openresty.org/cn/linux-packages.html#ubuntu)
@@ -63,3 +64,15 @@ luarocks install lua-resty-maxminddb
 - 自定义IP解析
   
 可修改`lua/processor/ip_region_analyzer.lua`文件替换为自己的IP解析，并根据自己的体系`id`与数据库中`system_code`表中`code_type_id=4`的地域信息进行`id`关系映射实现地域定向功能，映射功能和方法可参考现有使用了`maxmind`的映射关系代码。
+
+## Docker
+### 1. 配置更新
+根据需要更新`Dockerfile`中的变量，参考上述配置更新
+### 2. 构建镜像
+```bash
+sudo docker build -t Stella .
+```
+### 3. 运行容器
+```bash
+sudo docker run -dit --name Stella -p 80:80 Stella
+```
