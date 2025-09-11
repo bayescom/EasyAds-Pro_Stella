@@ -87,6 +87,12 @@ function Nut_Module:logReq()
         ip_info     = {},
         filter_info = self.filter_result,
         bid_info    = self.bid_info,
+
+        -- AB实验相关字段
+        group_id    = self.pv_rsp.group_id,
+        group_exp_id = self.pv_rsp.group_exp_id,
+        strategy_percentage_id = self.pv_rsp.strategy_percentage_id,
+        strategy_percentage_exp_id = self.pv_rsp.strategy_percentage_exp_id,
     }
 
     if utils.tableIsNotEmpty(ngx.ctx.ip_info) then

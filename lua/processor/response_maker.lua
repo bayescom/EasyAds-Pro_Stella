@@ -123,17 +123,22 @@ local function addVariousTrack(supplier_info, supplier, track_url)
 end
 
 local function abTagSetting(nut)
-    local group_name = "group"
-    local strategy_name = "strategy"
     if utils.tableIsNotEmpty(ngx.ctx.select_group) then
-        group_name = string.format("%s[%d]", ngx.ctx.select_group.group_name, ngx.ctx.select_group.group_id)
+        -- 这个是新的ABTest的tag设置
+        nut.pv_rsp.group_id = ngx.ctx.select_group.group_id
+        nut.pv_rsp.group_exp_id = ngx.ctx.select_group.group_percentage_exp_id
     end
 
     if utils.tableIsNotEmpty(ngx.ctx.select_strategy) then
-        strategy_name = string.format("%s[%d]", ngx.ctx.select_strategy.strategy_name, ngx.ctx.select_strategy.strategy_id)
+        -- 这个是新的ABTest的打印字段
+        nut.pv_rsp.strategy_id = ngx.ctx.select_strategy.strategy_id
     end
 
-    nut.pv_rsp.abtag = utils.concatByUnderscore(group_name, strategy_name)
+    if utils.tableIsNotEmpty(ngx.ctx.select_strategy_percentage) then
+        -- 这个是新的ABTest的tag设置
+        nut.pv_rsp.strategy_percentage_id = ngx.ctx.select_strategy_percentage.strategy_percentage_id
+        nut.pv_rsp.strategy_percentage_exp_id = ngx.ctx.select_strategy_percentage.strategy_percentage_exp_id
+    end
 end
 
 
