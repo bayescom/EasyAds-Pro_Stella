@@ -69,6 +69,8 @@ local function doOneTK(pixel)
         dlog.logClick(pixel.query_tb)
     elseif action == 'failed' then
         dlog.logFailed(pixel.query_tb)
+    elseif action == 'bidwin' then
+        dlog.logBidWin(pixel.query_tb)
     end
     
     return pixel.rsp_str, pixel.rsp_code, pixel.rsp_headers

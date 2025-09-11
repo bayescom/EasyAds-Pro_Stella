@@ -22,6 +22,10 @@ function _M.logSucceed(log)
     ngx.ctx.succeed_log = log
 end
 
+function _M.logBidWin(log)
+    ngx.ctx.bidwin_log = log
+end
+
 function _M.logWin(log)
     ngx.ctx.win_log = log
 end
