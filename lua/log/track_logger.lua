@@ -57,7 +57,7 @@ local function outputLog(events, logFunc)
 end
 
 -- 日志事件列表
-local events = {'loaded', 'succeed', 'win', 'click', 'failed', 'error'}
+local events = {'loaded', 'succeed', 'bidwin', 'win', 'click', 'failed', 'error'}
 
 -- 本地日志输出
 local function localLoggerOutput()

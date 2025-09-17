@@ -1,13 +1,16 @@
 local _M = {}
 local strategy = _M
 
-local entity = require 'bean.entity'
 local utils = require 'tools.utils'
 local obj_cache = require 'tools.obj_cache'
 
 local STRATEGY_DIRECT_PLUGINS = {
     {func_name = 'isHitAppVersionDirection', reason = 'App版本定向'},
     {func_name = 'isHitSdkVersionDirection', reason = 'SDK版本定向'},
+    {func_name = 'isHitLocationDirection', reason = '地域定向过滤'},
+    {func_name = 'isHitMakeDirection', reason = '手机制造商定向过滤'},
+    {func_name = 'isHitOsVersionDirection', reason = 'Os版本定向过滤'},
+    {func_name = 'isHitDeviceDirection', reason = '人群设备定向'}
 }
 
 local SUPPLIER_DIRECT_PLUGINS = {
@@ -82,7 +85,24 @@ local function doStrategySelect(nut)
     if utils.tableIsEmpty(ngx.ctx.select_strategy) then
         nut.suppliers_conf = {}
     else
-        nut.suppliers_conf = utils.deepcopy(ngx.ctx.select_strategy.suppliers)
+        -- 现在strategy下面还有一层 strategyPercentageList
+        -- 这里是一个百分比的列表，按照百分比来随机选择一个策略组
+        local random_data = math.random(1, 100)
+        local rate = 0
+        for _, strategy_percentage in ipairs(ngx.ctx.select_strategy.strategyPercentageList) do
+            rate = rate + tonumber(strategy_percentage.percentage)
+            if random_data <= rate then
+                ngx.ctx.select_strategy_percentage = strategy_percentage
+                break
+            end
+        end
+
+        if utils.tableIsEmpty(ngx.ctx.select_strategy_percentage) then
+            nut.suppliers_conf = {}
+        else
+            -- 这里将suppliers进行深拷贝，避免后续的代码对suppliers_conf的修改影响到suppliers
+            nut.suppliers_conf = utils.deepcopy(ngx.ctx.select_strategy_percentage.suppliers)
+        end
     end
 
 end
