@@ -1,8 +1,49 @@
 local utils = require 'tools.utils'
-local obj_cache = require 'tools.obj_cache'
 
 local _M = {}
 
+-- 地域定向
+function _M.isHitLocationDirection(strategy, nut)
+    local location_list = strategy.target_info.system_direct.location
+
+    local ip_info = ngx.ctx.ip_info
+
+    -- 这里有后面的判断是因为location_list的exclude和include字段为空的时候会在这两个字段塞个空表，导致对location_list判空失效
+    if utils.tableIsEmpty(location_list) or (utils.tableIsEmpty(location_list.exclude) and utils.tableIsEmpty(location_list.include)) then
+        return true
+    end
+
+    if utils.tableIsEmpty(ip_info) then
+        return false
+    end
+
+    local province_code = "-1"
+    local city_code = "-1"
+    if utils.tableIsNotEmpty(ip_info) and utils.tableIsNotEmpty(ip_info.bayes_id) then
+        if utils.isNotEmpty(ip_info.bayes_id.province_id) then
+            province_code = ip_info.bayes_id.province_id
+        end
+
+        if utils.isNotEmpty(ip_info.bayes_id.city_id) then
+            city_code = ip_info.bayes_id.city_id
+        end
+    end
+
+    if "-1" == province_code and "-1" == city_code then
+        -- 没有正确获取ip对应信息，以及没有映射到province或city的，不过滤
+        return true
+    end
+
+    if utils.tableIsNotEmpty(location_list.include) then
+        return utils.isInTable(province_code, location_list.include) or utils.isInTable(city_code, location_list.include)
+    end
+
+    if utils.tableIsNotEmpty(location_list.exclude) then
+        return not (utils.isInTable(province_code, location_list.exclude) or utils.isInTable(city_code, location_list.exclude))
+    end
+
+    return true
+end
 
 -- App版本定向
 function _M.isHitAppVersionDirection(strategy, nut)
@@ -61,32 +102,51 @@ function _M.isHitSdkVersionDirection(strategy, nut)
     end
 end
 
--- -- 设备定向
--- function _M.isHitDeviceDirection(strategy, nut)
---     local custom_direct = strategy.target_info.custom_direct
 
---     -- 没有设备自定义定向的，直接返回true，认为定向成功
---     if utils.tableIsEmpty(custom_direct) then
---         return true
---     end
+-- 手机制造商定向
+function _M.isHitMakeDirection(strategy, nut)
+    local make = string.upper(nut.pv_req.make or '')
+    local make_direct = strategy.target_info.system_direct.make
 
---     -- 设备号获取为空，直接返回true，认为定向成功
---     local deviceId = utils.getDeviceUniqueId(nut.pv_req)
---     if utils.isEmpty(deviceId) then
---         return true
---     end
+    if utils.tableIsEmpty(make_direct) then
+        return true
+    end
 
---     local target_ids_tb = obj_cache.getTargetInfo(deviceId)
+    if utils.tableIsEmpty(make_direct.include) and utils.tableIsEmpty(make_direct.exclude) then
+        return true
+    elseif utils.isEmpty(make) then
+        return false
+    elseif utils.tableIsNotEmpty(make_direct.include) then
+        return makeJudgeInList(make, make_direct.include)
+    elseif utils.tableIsNotEmpty(make_direct.exclude) then
+        return not makeJudgeInList(make, make_direct.exclude)
+    else
+        -- 其实不会走到这，为了代码结构好看还是加了一条
+        return true
+    end
+end
 
---     for _, each_custom in ipairs(custom_direct) do
---         -- 不满足定向条件的直接返回false，认为定向不成功
---         if not utils.includeMatch(target_ids_tb, each_custom.include)
---             or not utils.excludeMatch(target_ids_tb, each_custom.exclude) then
---             return false
---         end
---     end
+-- OS版本定向
+function _M.isHitOsVersionDirection(strategy, nut)
+    local osv = utils.getRequestOsv(nut.pv_req.os, nut.pv_req.osv)
+    local osv_version_direct = strategy.target_info.system_direct.osv
+    if utils.tableIsEmpty(osv_version_direct) then
+        return true
+    end
 
---     return true
--- end
+    if utils.tableIsEmpty(osv_version_direct.include)
+            and utils.tableIsEmpty(osv_version_direct.exclude) then
+        return true
+    elseif utils.isEmpty(osv) then
+        return false
+    elseif utils.tableIsNotEmpty(osv_version_direct.include) then
+        return utils.isInTable(osv, osv_version_direct.include)
+    elseif utils.tableIsNotEmpty(osv_version_direct.exclude) then
+        return not utils.isInTable(osv, osv_version_direct.exclude)
+    else
+        -- 其实不会走到这，为了代码结构好看还是加了一条
+        return true
+    end
+end
 
 return _M
