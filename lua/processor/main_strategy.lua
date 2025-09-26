@@ -9,8 +9,7 @@ local STRATEGY_DIRECT_PLUGINS = {
     {func_name = 'isHitSdkVersionDirection', reason = 'SDK版本定向'},
     {func_name = 'isHitLocationDirection', reason = '地域定向过滤'},
     {func_name = 'isHitMakeDirection', reason = '手机制造商定向过滤'},
-    {func_name = 'isHitOsVersionDirection', reason = 'Os版本定向过滤'},
-    {func_name = 'isHitDeviceDirection', reason = '人群设备定向'}
+    {func_name = 'isHitOsVersionDirection', reason = 'Os版本定向过滤'}
 }
 
 local SUPPLIER_DIRECT_PLUGINS = {
