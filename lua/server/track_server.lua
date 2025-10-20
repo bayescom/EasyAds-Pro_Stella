@@ -1,6 +1,9 @@
 local dlog = require 'log.dlog'
+local conf = require 'conf.conf'
 local utils = require 'tools.utils'
 local obj_cache = require 'tools.obj_cache'
+local conf_cache = require 'tools.conf_cache'
+local net_url = require 'net.url'
 local json = require 'cjson.safe'
 local b64 = require("ngx.base64")
 
@@ -51,6 +54,61 @@ local function extendQuery(pixel)
     end
 end
 
+local function genRewardCallback(callback_url, secret, req_body)
+    local req_body_json = {}
+    if utils.isNotEmpty(req_body) then
+        req_body_json = json.decode(req_body)
+    end
+    
+    local callback_obj = net_url.parse(callback_url)
+    callback_obj.query.secret = secret
+    for k, v in pairs(req_body_json) do
+        callback_obj.query[k] = v
+    end
+
+    return tostring(callback_obj)
+end
+
+local function doReward(pixel)
+    local reward_rsp = {
+        code = 1,
+        msg = 'OK'
+    }
+
+    local req_query = pixel.query_tb
+    local adspot_conf = conf_cache.getSuppliersInfo(req_query.adspotid)
+
+    local req_body = pixel.body
+
+    if utils.tableIsEmpty(adspot_conf) then
+        reward_rsp.code = -1
+        reward_rsp.msg = 'Adspot config not found'
+        return reward_rsp
+    end
+
+    local adspot_reward = utils.tblElement(adspot_conf, 'ext_settings', 'reward')
+    if utils.tableIsEmpty(adspot_reward) then
+        reward_rsp.code = -2
+        reward_rsp.msg = 'Adspot reward not found'
+        return reward_rsp
+    end
+
+    -- 服务端验证直接发送
+    if utils.isNotEmpty(adspot_reward.rewardCallback) then
+        local secret = utils.getMd5(req_query.adspotid .. adspot_reward.securityKey)
+        local callback_url = genRewardCallback(adspot_reward.rewardCallback, secret, req_body)
+        local status, rsp_body = utils.doUrlGet(callback_url, conf.callback_timeout)
+        if not status or rsp_body ~= 'success' then
+            reward_rsp.code = -3
+            reward_rsp.msg = 'Callback failed'
+            return reward_rsp
+        end
+    end
+
+    -- 非服务端验证，直接返回
+    return reward_rsp
+end
+
 local function doOneTK(pixel)
     -- add action, _time
     extendQuery(pixel)
@@ -71,6 +129,10 @@ local function doOneTK(pixel)
         dlog.logFailed(pixel.query_tb)
     elseif action == 'bidwin' then
         dlog.logBidWin(pixel.query_tb)
+    elseif action == 'reward' then
+        local reward_rsp = doReward(pixel)
+        pixel.rsp_str = json.encode(reward_rsp)
+        dlog.logReward(pixel.query_tb)
     end
     
     return pixel.rsp_str, pixel.rsp_code, pixel.rsp_headers

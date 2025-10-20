@@ -5,6 +5,8 @@ local conf = _M
 
 _M.log_type = "${LOG_TYPE}"  -- local为本地日志，server为上报服务器
 
+_M.callback_timeout = 3000  -- 回调超时时间，单位毫秒
+
 -- 上报服务器地址
 _M.track = {
     url = 'http://${DOMAIN_STELLA}'
