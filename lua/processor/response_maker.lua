@@ -178,10 +178,10 @@ local function adspotServerRewardSetting(nut)
         return
     end
 
-    local track_url = net_url.parse(conf.archon.url)
+    local track_url = net_url.parse(conf.track.url)
 
     genTrackUrlCommon(nut, track_url)
-    track_url.path = "archon"
+    track_url.path = "track"
     track_url.query.action = "reward"
 
     -- 只有服务端上报，才设置该字段
