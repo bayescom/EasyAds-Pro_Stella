@@ -38,8 +38,8 @@ function _M.logFailed(log)
     ngx.ctx.failed_log = log
 end
 
-function _M.logGroMore(log)
-    ngx.ctx.gromore_log = log
+function _M.logReward(log)
+    ngx.ctx.reward_log = log
 end
 
 function _M.logSdkEvent(log)

@@ -1,5 +1,4 @@
 local utils = require 'tools.utils'
-local obj_cache = require 'tools.obj_cache'
 
 local _M = {}
 

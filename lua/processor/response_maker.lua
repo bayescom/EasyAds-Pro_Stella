@@ -170,6 +170,29 @@ local function headBiddingConfSetting(nut)
     end
 end
 
+local function adspotServerRewardSetting(nut)
+    -- 没有设置adspot_reward的广告位，直接返回
+    local adspot_reward_conf = utils.tblElement(nut.pv_prop, 'ext_settings', 'reward')
+
+    if utils.tableIsEmpty(adspot_reward_conf) then
+        return
+    end
+
+    local track_url = net_url.parse(conf.archon.url)
+
+    genTrackUrlCommon(nut, track_url)
+    track_url.path = "archon"
+    track_url.query.action = "reward"
+
+    -- 只有服务端上报，才设置该字段
+    nut.pv_rsp.server_reward = {
+        url = tostring(track_url),
+        name = adspot_reward_conf.rewardName,
+        count = adspot_reward_conf.rewardAmount,
+    }
+    
+end
+
 
 function _M.doProcess(nut)
     local suppliers = {}
@@ -182,6 +205,9 @@ function _M.doProcess(nut)
 
         -- setting head_bidding_group
         headBiddingConfSetting(nut)
+
+        -- 设置激励视频广告位的服务端竞价上报
+        adspotServerRewardSetting(nut)
 
         nut.pv_rsp.setting.bidding_type = entity.enum_bidding_type.aggregate_bidding
 
