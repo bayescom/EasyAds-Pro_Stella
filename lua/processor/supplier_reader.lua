@@ -22,6 +22,7 @@ function _M.doProcess(nut)
     -- set pv_prop info
     nut.pv_prop.appid = suppliers_info.appid
     nut.pv_prop.request_limit = suppliers_info.request_limit
+    nut.pv_prop.ext_settings = suppliers_info.ext_settings
 end
 
 return supplier_reader
