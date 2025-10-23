@@ -287,24 +287,6 @@ function _M.tblElement(tbl, ...)
     return getTableElementHelper(tbl, ...)
 end
 
-
-function _M.isTest(nut)
-    local imei= nut.pv_req.imei
-    local oaid= nut.pv_req.oaid
-    local isTest = false
-        
-    if utils.isEmpty(imei) and utils.isEmpty(oaid) then
-        isTest = math.random(1, 2) == 1
-    else
-        local device = ngx.md5(tostring(imei) .. tostring(oaid))
-        device = string.sub(device,string.len(device)-1,string.len(device))
-        local deviceNum = tonumber(device, 16)
-        isTest = deviceNum%2 == 1
-    end
-
-    return isTest
-end
-
 function _M.includeMatch(req, include)
     if utils.tableIsEmpty(req) then
         return false
@@ -331,18 +313,6 @@ function _M.excludeMatch(req, exclude)
     end
 
     return true
-end
-
-function _M.getAppVersionValue(appver)
-    if utils.isNotEmpty(appver) then
-        local ver_vec = utils.strSplit(appver, '.')
-        local ver_vec1 = ver_vec[1] or 0
-        local ver_vec2 = ver_vec[2] or 0
-        local ver_vec3 = ver_vec[3] or 0
-        local ver_value = (tonumber(ver_vec1) or 0)*10000 + (tonumber(ver_vec2) or 0)*100 + (tonumber(ver_vec3) or 0)
-
-        return ver_value
-    end
 end
 
 -- 该函数返回v1是否大于等于v2
@@ -459,6 +429,9 @@ function _M.redisArrayToTable(redis_hash)
 end
 
 local function getOsvTop(osv)
+    if utils.isEmpty(osv) then
+        return ''
+    end
     local osv_array = _M.strSplit(osv, ".")
     return _M.concatByDot(osv_array[1] or '', osv_array[2] or '')
 end
@@ -467,6 +440,9 @@ function _M.getRequestOsv(os, osv)
     local local_os = os or ''
     local local_osv = getOsvTop(osv)
 
+    if utils.isEmpty(local_os) or utils.isEmpty(local_osv) then
+        return ''
+    end
     return _M.concatByUnderscore(local_os, local_osv)
 end
 
