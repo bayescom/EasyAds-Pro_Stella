@@ -150,6 +150,7 @@ local function initOnePixel(query_str, query_tb)
         path        = ngx.var.document_uri,
         query_tb    = query_tb,
         query_str   = query_str,
+        body        = ngx.req.get_body_data(),
         method      = ngx.var.request_method,
         req         = {},
         rsp_headers = {
@@ -165,6 +166,7 @@ end
 
 
 local function handleAction()
+    ngx.req.read_body()
     local query_str = ngx.var.query_string
     local query_tbl = ngx.req.get_uri_args()
 
