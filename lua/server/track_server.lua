@@ -54,12 +54,7 @@ local function extendQuery(pixel)
     end
 end
 
-local function genRewardCallback(callback_url, secret, req_body)
-    local req_body_json = {}
-    if utils.isNotEmpty(req_body) then
-        req_body_json = json.decode(req_body)
-    end
-    
+local function genRewardCallback(callback_url, secret, req_body_json)    
     local callback_obj = net_url.parse(callback_url)
     callback_obj.query.secret = secret
     for k, v in pairs(req_body_json) do
@@ -95,8 +90,9 @@ local function doReward(pixel)
 
     -- 服务端验证直接发送
     if utils.isNotEmpty(adspot_reward.rewardCallback) then
-        local secret = utils.getMd5(req_query.adspotid .. adspot_reward.securityKey..req_query.timestamp)
-        local callback_url = genRewardCallback(adspot_reward.rewardCallback, secret, req_body)
+        local req_body_json = utils.isNotEmpty(req_body) and json.decode(req_body) or {}
+        local secret = utils.getMd5(req_query.adspotid .. adspot_reward.securityKey..req_body_json.timestamp)
+        local callback_url = genRewardCallback(adspot_reward.rewardCallback, secret, req_body_json)
         local status, rsp_body = utils.doUrlGet(callback_url, conf.callback_timeout)
         if not status or rsp_body ~= 'success' then
             reward_rsp.code = -3
