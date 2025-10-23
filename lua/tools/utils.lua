@@ -6,6 +6,7 @@ local ffi_zlib  = require 'ffi-zlib'
 local resty_str = require 'resty.string'
 local resty_md5 = require 'resty.md5'
 local http = require 'resty.http'
+local json = require 'cjson.safe'
 
 local _M = {}
 local utils = _M
