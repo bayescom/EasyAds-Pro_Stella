@@ -5,6 +5,7 @@ local b64 = require("ngx.base64")
 local ffi_zlib  = require 'ffi-zlib'
 local resty_str = require 'resty.string'
 local resty_md5 = require 'resty.md5'
+local http = require 'resty.http'
 
 local _M = {}
 local utils = _M
@@ -490,6 +491,25 @@ function _M.getMd5(id, to_upper)
     end
 
     return resty_str.to_hex(md5:final())
+end
+
+function _M.doUrlGet(url, timeout)
+    local httpc = http.new()
+    httpc:set_timeout(timeout)
+
+    local rsp, err = httpc:request_uri(url,{method = "GET", keepalive_timeout = 500, keepalive_pool = 32})
+    if not rsp then
+        ngx.log(ngx.ERR, _M.concat("url get request failed, rsp is nil! nurl: ", url, ", err: ", err))
+        return entity.enum_rsp_status.http_not_ok
+    else
+        if rsp.status ~= ngx.HTTP_OK then
+            ngx.log(ngx.ERR, _M.concat("url get request failed! url: ", url, ", err: ", err))
+            ngx.log(ngx.ERR, "url get rsp: ", json.encode(rsp.body))
+            return entity.enum_rsp_status.http_not_ok
+        else
+            return entity.enum_rsp_status.http_ok, rsp.body
+        end
+    end
 end
 
 return utils
