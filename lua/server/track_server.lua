@@ -95,7 +95,7 @@ local function doReward(pixel)
 
     -- 服务端验证直接发送
     if utils.isNotEmpty(adspot_reward.rewardCallback) then
-        local secret = utils.getMd5(req_query.adspotid .. adspot_reward.securityKey)
+        local secret = utils.getMd5(req_query.adspotid .. adspot_reward.securityKey..req_query.timestamp)
         local callback_url = genRewardCallback(adspot_reward.rewardCallback, secret, req_body)
         local status, rsp_body = utils.doUrlGet(callback_url, conf.callback_timeout)
         if not status or rsp_body ~= 'success' then
