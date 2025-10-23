@@ -498,7 +498,7 @@ function _M.doUrlGet(url, timeout)
     local httpc = http.new()
     httpc:set_timeout(timeout)
 
-    local rsp, err = httpc:request_uri(url,{method = "GET",  ssl_verify=false, keepalive_timeout = 500, keepalive_pool = 32})
+    local rsp, err = httpc:request_uri(url,{method = "GET",  ssl_verify = false, keepalive_timeout = 500, keepalive_pool = 32})
     if not rsp then
         ngx.log(ngx.ERR, _M.concat("url get request failed, rsp is nil! nurl: ", url, ", err: ", err))
         return entity.enum_rsp_status.http_not_ok
