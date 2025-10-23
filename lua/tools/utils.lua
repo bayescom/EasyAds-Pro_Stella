@@ -1,11 +1,10 @@
 local conf = require 'conf'
-local http = require 'resty.http'
 local entity = require 'bean.entity'
-local json = require 'cjson.safe'
-local md5_core = require "md5"
 local aes = require "resty.aes"
 local b64 = require("ngx.base64")
 local ffi_zlib  = require 'ffi-zlib'
+local resty_str = require 'resty.string'
+local resty_md5 = require 'resty.md5'
 
 local _M = {}
 local utils = _M
@@ -471,6 +470,26 @@ function _M.decompress(str)
     end
 
     return table.concat(output_table,'')
+end
+
+function _M.upper(s)
+    if _M.isEmpty(s) then return s end
+    return string.upper(s)
+end
+
+function _M.getMd5(id, to_upper)
+    if _M.isEmpty(id) then
+        return nil
+    end
+
+    local md5 = resty_md5:new()
+    if to_upper == true then
+        md5:update(_M.upper(id))
+    else
+        md5:update(id)
+    end
+
+    return resty_str.to_hex(md5:final())
 end
 
 return utils
