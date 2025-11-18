@@ -4,11 +4,11 @@ local file_logger = require 'log.filelogger'
 local conf = require 'conf'
 local socket_logger = require "resty.logger.socket"
 
-local function initFileLogger()
-    local file_path = "./slog/sdkevent."
+local log_source = 'sdkevent'
 
-    if not file_logger.initted() then
-        local ok, err = file_logger.init(file_path)
+local function initFileLogger()
+    if not file_logger.initted(log_source) then
+        local ok, err = file_logger.init(log_source)
         if not ok then
             ngx.log(ngx.ERR, "failed to initialize the local logger: ", err)
             return
@@ -40,7 +40,7 @@ end
 
 -- 发送到fluentd的日志，先还是output到本地文件夹
 local function localOutput(log)
-    file_logger.log(log)
+    file_logger.log(log, log_source)
 end
 
 -- 公共日志输出函数

@@ -22,58 +22,94 @@ if not succ then
 end
 local _M = new_tab(0,5)
 
---config
-local pre_hour
-local now_hour
-local logger_initted
-local log_fn
-local log_fd
+-- slog config
+local slog_file_path = "./slog/"
+-- 全部迁移到 log_state 内
+local log_state = {}
 
 local function getNowDateHour()
     return os.date("%Y-%m-%d_%H", unixtime)
 end
 
-local function file_rolling()
+local function get_log_file_path(log_source, nowDateHour)
+    return slog_file_path .. log_source .. "." .. nowDateHour .. ".log"
+end
+
+local function reset_log_state(log_source, log_fd, nowDateHour)
+    log_state[log_source] = {
+        log_fd = log_fd,
+        pre_hour = nowDateHour,
+        now_hour = nowDateHour,
+        logger_initted = true,
+    }
+end
+
+local function file_rolling(log_source)
+    local st = log_state[log_source]
+    if not st then
+        return
+    end
+
     local nowDateHour = getNowDateHour()
-    if nowDateHour ~= now_hour then
-        C.close(log_fd)
-        local logfile = log_fn..""..nowDateHour..".log"
-        pre_hour = now_hour
-        now_hour = nowDateHour
-        log_fd = C.open(logfile, bor(O_RDWR, O_CREAT, O_APPEND), bor(S_IRWXU, S_IRGRP, S_IROTH))
-        if nil == log_fd then
-            ngx.log(ngx.ERR, "Failed to open file : ["..logfile.."]")
+
+    if nowDateHour ~= st.now_hour then
+        C.close(st.log_fd)
+
+        local log_file = get_log_file_path(log_source, nowDateHour)
+
+        local new_log_fd = C.open(log_file, bor(O_RDWR, O_CREAT, O_APPEND), bor(S_IRWXU, S_IRGRP, S_IROTH))
+
+        if not new_log_fd or new_log_fd < 0 then
+            ngx.log(ngx.ERR, "Failed to open file : [" .. log_file .. "]")
+            return
         end
+
+        -- 更新当前 log source 的状态
+        st.log_fd = new_log_fd
+        st.pre_hour = st.now_hour
+        st.now_hour = nowDateHour
     end
 end
 
-function _M.init(filename)
+function _M.init(log_source)
     local nowDateHour = getNowDateHour()
-    log_fn = filename
-    local log_file = filename..""..nowDateHour..".log"
-    log_fd = C.open(log_file, bor(O_RDWR, O_CREAT, O_APPEND), bor(S_IRWXU, S_IRGRP, S_IROTH))
-    if nil == log_fd then
-        ngx.log(ngx.ERR, "Failed to open file : ["..log_file.."]")
+    local log_file = get_log_file_path(log_source, nowDateHour)
+
+    local log_fd = C.open(log_file, bor(O_RDWR, O_CREAT, O_APPEND), bor(S_IRWXU, S_IRGRP, S_IROTH))
+
+    if not log_fd or log_fd < 0 then
+        ngx.log(ngx.ERR, "Failed to open file : [" .. log_file .. "]")
         return nil, "failed to open file"
     else
-        pre_hour = nowDateHour
-        now_hour = nowDateHour
-        logger_initted = true
-        return logger_initted
+        reset_log_state(log_source, log_fd, nowDateHour)
+        return true
     end
 end
 
-function _M.log(msg)
-    file_rolling()
-    if nil ~= log_fd then
+function _M.log(msg, log_source)
+    local st = log_state[log_source]
+
+    if not st then
+        local ok = _M.init(log_source)
+        if not ok then
+            ngx.log(ngx.ERR, "Failed to init logger for source: ", log_source)
+            return
+        end
+        st = log_state[log_source]
+    end
+
+    file_rolling(log_source)
+    local log_fd = st.log_fd
+
+    if log_fd then
         C.write(log_fd, msg, #msg)
     else
-        ngx.log(ngx.ERR, "Failed to write file")
+        ngx.log(ngx.ERR, "Failed to write file, no fd for source: ", log_source)
     end
 end
 
-function _M.initted()
-    return logger_initted
+function _M.initted(log_source)
+    return log_state[log_source] and log_state[log_source].logger_initted
 end
 
 return _M
