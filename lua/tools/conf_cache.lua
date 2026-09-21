@@ -29,6 +29,19 @@ local supplier_conf = {
     cache = redis_utils.createLruCache(MEDIUM_CACHE_SIZE),
     is_zip = false,
     check_empty = true,
+    md5kv_key = 'MD5KV',
+}
+
+-- custom adn conf，与 Luna SdkCustomAdnConfExportTask 对应，独立 db
+local custom_adn_conf = {
+    name = 'custom adn conf',
+    redis_client = redis_utils.createRedisClient(conf.redis, conf.redis.custom_adn_db),
+    cache_size = MEDIUM_CACHE_SIZE,
+    md5_cache = redis_utils.createLruCache(MEDIUM_CACHE_SIZE),
+    cache = redis_utils.createLruCache(MEDIUM_CACHE_SIZE),
+    is_zip = false,
+    check_empty = false,
+    md5kv_key = 'MD5KV',
 }
 
 local function redisArrayToTable(redis_array)
@@ -40,16 +53,24 @@ local function redisArrayToTable(redis_array)
     return redis_tbl
 end
 
-local function getMd5ConfHashMap(redis_client)
+local function getConfCacheKey(one_conf, key)
+    if utils.isEmpty(one_conf.key_prefix) then
+        return key
+    end
+    return one_conf.key_prefix .. ':' .. key
+end
+
+local function getMd5ConfHashMap(redis_client, md5kv_key)
+    md5kv_key = md5kv_key or 'MD5KV'
     -- 获取所有的md5
     local status, res = pcall(
         function ()
-            return redis_client:hgetall('MD5KV')
+            return redis_client:hgetall(md5kv_key)
         end
     )
 
     if not status then
-        ngx.log(ngx.ERR, 'get MD5KV failed' .. res)
+        ngx.log(ngx.ERR, 'get ' .. md5kv_key .. ' failed' .. res)
         return nil
     end
 
@@ -69,12 +90,12 @@ function _M.conf_cache_base(one_conf)
     -- 获取所有的md5
     local status, md5_res = pcall(
         function ()
-            return getMd5ConfHashMap(one_conf.redis_client)
+            return getMd5ConfHashMap(one_conf.redis_client, one_conf.md5kv_key)
         end
     )
 
     if not status then
-        ngx.log(ngx.ERR, 'get MD5KV failed for ' .. one_conf.name)
+        ngx.log(ngx.ERR, 'get ' .. (one_conf.md5kv_key or 'MD5KV') .. ' failed for ' .. one_conf.name)
         return nil
     end
 
@@ -138,6 +159,7 @@ end
 function _M.conf_cache()
     local conf_map = {
         supplier_conf,
+        custom_adn_conf,
     }
 
     for _, one_conf in ipairs(conf_map) do
@@ -172,6 +194,7 @@ local function getConfById(key, conf)
     local conf_cache = conf.cache
     local conf_redis_client = conf.redis_client
     local is_zip = conf.is_zip
+    key = getConfCacheKey(conf, key)
 
     local conf_tbl = conf_cache:get(key)
     -- 读取redis的中新的配置并塞入cache的行为在这里进行，需要读取update_tag来判断是否需要更新
@@ -201,6 +224,11 @@ end
 -- Supplier conf
 function _M.getSuppliersInfo(adspotid)
     return getConfById(adspotid, supplier_conf)
+end
+
+-- Custom ADN conf
+function _M.getCustomAdnInfo(appid)
+    return getConfById(appid, custom_adn_conf)
 end
 
 return _M

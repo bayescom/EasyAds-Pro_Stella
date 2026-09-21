@@ -68,6 +68,12 @@ local function genSupplierInfoSetting(index, supplier, sdk_version)
     supplier_info.mediaid = utils.NilDefault(supplier.appid, '')
     supplier_info.mediakey = utils.NilDefault(supplier.app_key, '')
     supplier_info.mediasecret = utils.NilDefault(supplier.app_secret, '')
+    supplier_info.enable_cache = utils.NilDefault(supplier.enable_cache, 0)
+    supplier_info.cache_timeout = supplier.cache_timeout
+    supplier_info.is_custom_adn = utils.NilDefault(supplier.is_custom, 0)
+    if 1 == supplier_info.is_custom_adn and utils.isNotEmpty(supplier.custom_param) then
+        supplier_info.custom_params = supplier.custom_param
+    end
     supplier_info.ext = supplier.ext
     supplier_info.imptk= {}
     supplier_info.clicktk = {}
