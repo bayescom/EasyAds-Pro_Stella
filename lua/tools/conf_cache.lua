@@ -31,6 +31,17 @@ local supplier_conf = {
     check_empty = true,
 }
 
+-- custom adn conf，与 Luna SdkCustomAdnConfExportTask 对应，独立 db
+local custom_adn_conf = {
+    name = 'custom adn conf',
+    redis_client = redis_utils.createRedisClient(conf.redis, conf.redis.custom_adn_db),
+    cache_size = MEDIUM_CACHE_SIZE,
+    md5_cache = redis_utils.createLruCache(MEDIUM_CACHE_SIZE),
+    cache = redis_utils.createLruCache(MEDIUM_CACHE_SIZE),
+    is_zip = false,
+    check_empty = false,
+}
+
 local function redisArrayToTable(redis_array)
     local redis_tbl = {}
     for i = 1, #redis_array, 2 do
@@ -138,6 +149,7 @@ end
 function _M.conf_cache()
     local conf_map = {
         supplier_conf,
+        custom_adn_conf,
     }
 
     for _, one_conf in ipairs(conf_map) do
@@ -201,6 +213,11 @@ end
 -- Supplier conf
 function _M.getSuppliersInfo(adspotid)
     return getConfById(adspotid, supplier_conf)
+end
+
+-- Custom ADN conf
+function _M.getCustomAdnInfo(appid)
+    return getConfById(appid, custom_adn_conf)
 end
 
 return _M

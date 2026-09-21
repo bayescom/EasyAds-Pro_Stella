@@ -29,6 +29,7 @@ _M.redis = {
     port = ${REDIS_PORT},
     passwd = '${REDIS_PASSWORD}',
     media_db = 1,            -- 媒体广告位配置信息
+    custom_adn_db = 5,       -- 自定义 ADN 配置信息
 }
 
 _M.frequency_redis = {
