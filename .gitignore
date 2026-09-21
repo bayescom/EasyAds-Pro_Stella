@@ -1,6 +1,7 @@
 *.swp
 .idea
 .vscode
+data/*.mmdb
 slog/*.log
 bin/debug_stop.sh
 bin/debug_start.sh
